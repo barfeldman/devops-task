@@ -146,17 +146,29 @@ answered 200 on every route through the nginx ingress. The screenshots and a ful
 | --- | --- |
 | ![Argo CD](docs/proof/argocd-app-tree.png) | ![App](docs/proof/ingress-my-app.png) |
 
+The pipeline itself also runs green on a real Jenkins (Helm-deployed on the same
+cluster, with Kubernetes pod agents). The full build console, including the
+Semgrep and Trivy output, is in
+[`docs/proof/jenkins-build-console.txt`](docs/proof/jenkins-build-console.txt).
+
+![Jenkins pipeline run](docs/proof/jenkins-build3.png)
+
 ## A few honest notes
 
-The Jenkinsfile itself hasn't run on a real Jenkins controller (I don't have one
-set up), so the orchestration is validated by compiling the Groovy and checking
-each tool image. The gates aren't just theory, though. I ran Semgrep, `npm audit`
-and Trivy against this code and image the same way the pipeline does, and two of
-them found real problems: the audit flagged vulnerable Express transitive deps,
-and Trivy caught npm's own bundled packages plus an OpenSSL CVE in the base
-image. That's why the lockfile is patched and the Dockerfile drops npm and runs
-`apk upgrade`. After those fixes all three come back clean (Semgrep 0 findings,
-audit 0 vulnerabilities, Trivy 0 HIGH/CRITICAL).
+I ran the pipeline on a real Jenkins to make sure it actually works, not just that
+it compiles. Jenkins is Helm-deployed on the same minikube cluster and runs each
+stage in its own container on a Kubernetes pod agent. It goes green end to end:
+checkout, install and smoke test, Semgrep SAST (0 findings), npm audit (0 vulns),
+the Kaniko build, and the Trivy scan (0 HIGH/CRITICAL). The push and GitOps
+promote stages only run on `main`, so a branch build skips them as designed. Doing
+this shook out two real bugs I'd otherwise have shipped: `timestamps()` needed a
+plugin that wasn't installed, and my own git commands tripped git's
+dubious-ownership check inside the agent container. Both are fixed.
+
+Running the gates directly also caught real vulnerabilities: npm audit flagged
+vulnerable Express transitive deps, and Trivy caught npm's bundled packages plus
+an OpenSSL CVE in the base image. That is why the lockfile is patched and the
+Dockerfile drops npm and runs `apk upgrade`. Everything comes back clean now.
 
 The image in the demo was built locally and loaded into minikube rather than
 pushed to GHCR, since that push belongs to the pipeline and my token doesn't have

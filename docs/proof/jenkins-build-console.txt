@@ -1,0 +1,492 @@
+Started by user Jenkins Admin
+Obtained Jenkinsfile from git https://github.com/barfeldman/devops-task.git
+[Pipeline] Start of Pipeline
+[Pipeline] podTemplate
+[Pipeline] {
+[Pipeline] node
+Created Pod: kubernetes jenkins/sample-nodejs-ci-3-mnt0c-8pjr9-436jc
+[PodInfo] jenkins/sample-nodejs-ci-3-mnt0c-8pjr9-436jc
+	Container [git] waiting [ContainerCreating] No message
+	Container [jnlp] waiting [ContainerCreating] No message
+	Container [kaniko] waiting [ContainerCreating] No message
+	Container [node] waiting [ContainerCreating] No message
+	Container [semgrep] waiting [ContainerCreating] No message
+	Container [skopeo] waiting [ContainerCreating] No message
+	Container [trivy] waiting [ContainerCreating] No message
+	Pod [Pending][ContainersNotReady] containers with unready status: [node git semgrep kaniko trivy skopeo jnlp]
+Agent sample-nodejs-ci-3-mnt0c-8pjr9-436jc is provisioned from template sample-nodejs-ci_3-mnt0c-8pjr9
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  annotations:
+    kubernetes.jenkins.io/last-refresh: "1787776169471"
+    buildUrl: "http://jenkins.jenkins.svc.cluster.local:8080/job/sample-nodejs-ci/3/"
+    runUrl: "job/sample-nodejs-ci/3/"
+  labels:
+    app: "sample-nodejs-ci"
+    jenkins/jenkins-jenkins-agent: "true"
+    jenkins/label-digest: "a6be81b9c62f908d71453fd2829bbd2b77259bc2"
+    jenkins/label: "sample-nodejs-ci_3-mnt0c"
+    kubernetes.jenkins.io/controller: "http___jenkins_jenkins_svc_cluster_local_8080x"
+  name: "sample-nodejs-ci-3-mnt0c-8pjr9-436jc"
+  namespace: "jenkins"
+spec:
+  containers:
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "node:22-alpine"
+    name: "node"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "alpine/git:2.45.2"
+    name: "git"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "semgrep/semgrep:1.90.0"
+    name: "semgrep"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "gcr.io/kaniko-project/executor:v1.23.2-debug"
+    name: "kaniko"
+    volumeMounts:
+    - mountPath: "/kaniko/.docker"
+      name: "regcred"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "aquasec/trivy:0.55.0"
+    name: "trivy"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "infinity"
+    command:
+    - "sleep"
+    image: "quay.io/skopeo/stable:v1.16.1"
+    name: "skopeo"
+    volumeMounts:
+    - mountPath: "/skopeo/.docker"
+      name: "regcred"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - env:
+    - name: "JENKINS_SECRET"
+      value: "********"
+    - name: "JENKINS_TUNNEL"
+      value: "jenkins-agent.jenkins.svc.cluster.local:50000"
+    - name: "JENKINS_AGENT_NAME"
+      value: "sample-nodejs-ci-3-mnt0c-8pjr9-436jc"
+    - name: "REMOTING_OPTS"
+      value: "-noReconnectAfter 1d"
+    - name: "JENKINS_NAME"
+      value: "sample-nodejs-ci-3-mnt0c-8pjr9-436jc"
+    - name: "JENKINS_AGENT_WORKDIR"
+      value: "/home/jenkins/agent"
+    - name: "JENKINS_URL"
+      value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+    image: "jenkins/inbound-agent:3383.vc8881d4b_0e76-1-jdk25"
+    name: "jnlp"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  nodeSelector:
+    kubernetes.io/os: "linux"
+  restartPolicy: "Never"
+  volumes:
+  - name: "regcred"
+    secret:
+      items:
+      - key: ".dockerconfigjson"
+        path: "config.json"
+      secretName: "regcred"
+  - emptyDir:
+      medium: ""
+    name: "workspace-volume"
+
+Running on sample-nodejs-ci-3-mnt0c-8pjr9-436jc in /home/jenkins/agent/workspace/sample-nodejs-ci
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/barfeldman/devops-task.git
+ > git init /home/jenkins/agent/workspace/sample-nodejs-ci # timeout=10
+Fetching upstream changes from https://github.com/barfeldman/devops-task.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/barfeldman/devops-task.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+Checking out Revision 7a6d7db2e7b5ff5076631bc141324d4948512826 (refs/remotes/origin/ci-test)
+ > git config remote.origin.url https://github.com/barfeldman/devops-task.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/ci-test^{commit} # timeout=10
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 7a6d7db2e7b5ff5076631bc141324d4948512826 # timeout=10
+Commit message: "wip: mark workspace git-safe"
+ > git rev-list --no-walk 45687cff479696e9e2e1cddfa9ecb50e630edfad # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timeout
+Timeout set to expire in 30 min
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+Warning: JENKINS-30600: special launcher org.csanchez.jenkins.plugins.kubernetes.pipeline.ContainerExecDecorator$1@5149e3be; decorates org.csanchez.jenkins.plugins.kubernetes.pipeline.ContainerExecDecorator$1@8fb5cc; decorates RemoteLauncher[hudson.remoting.Channel@5e23c251:JNLP4-connect connection from 10.244.0.17/10.244.0.17:47768] will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+Fetching changes from the remote Git repository
+Checking out Revision 7a6d7db2e7b5ff5076631bc141324d4948512826 (refs/remotes/origin/ci-test)
+Commit message: "wip: mark workspace git-safe"
+[Pipeline] sh
+ > git rev-parse --resolve-git-dir /home/jenkins/agent/workspace/sample-nodejs-ci/.git # timeout=10
+ > git config remote.origin.url https://github.com/barfeldman/devops-task.git # timeout=10
+Fetching upstream changes from https://github.com/barfeldman/devops-task.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/barfeldman/devops-task.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/ci-test^{commit} # timeout=10
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 7a6d7db2e7b5ff5076631bc141324d4948512826 # timeout=10
++ git config --global --add safe.directory '*'
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ git rev-parse '--short=7' HEAD
+[Pipeline] sh
++ git log -1 '--pretty=%B'
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Install & Test)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/sample-nodejs-ci/app
+[Pipeline] {
+[Pipeline] sh
++ npm ci
+
+added 77 packages, and audited 78 packages in 1s
+
+15 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+[Pipeline] sh
++ npm test
+
+> sample-nodejs@1.0.0 test
+> node test/smoke.js
+
+Server running on port 18080
+OK   /ready -> 200
+OK   /live -> 200
+OK   /my-app -> 200
+OK   /about -> 200
+OK   /metrics -> 200
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (SAST - Semgrep)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ semgrep --version
+1.90.0
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
++ semgrep scan '--config=p/default' '--config=p/nodejs' '--config=p/javascript' '--config=p/security-audit' '--severity=ERROR' --error --sarif '--output=semgrep.sarif' app
+METRICS: Using configs from the Registry (like --config=p/ci) reports pseudonymous rule metrics to semgrep.dev.
+To disable Registry rule metrics, use "--metrics=off".
+Using configs only from local files (like --config=xyz.yml) does not enable metrics.
+
+More information: https://semgrep.dev/docs/metrics
+
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 8 files tracked by git with 313 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      44       7          Community     313                                                                
+  json              1       2                                                                                           
+  js               32       1                                                                                           
+  dockerfile        4       1                                                                                           
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+Some files were skipped or only partially analyzed.
+  Scan was limited to files tracked by git.
+  Scan skipped: 1 files matching .semgrepignore patterns
+  For a full list of skipped files, run semgrep with the --verbose flag.
+
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+Ran 81 rules on 7 files: 0 findings.
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/
+[Pipeline] }
+[Pipeline] // container
+Post stage
+[Pipeline] archiveArtifacts
+Archiving artifacts
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Dependency Audit)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] dir
+Running in /home/jenkins/agent/workspace/sample-nodejs-ci/app
+[Pipeline] {
+[Pipeline] sh
++ npm audit '--audit-level=critical'
+found 0 vulnerabilities
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Version Bump)
+Stage "Version Bump" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build Image (Kaniko))
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ /kaniko/executor '--context=dir:///home/jenkins/agent/workspace/sample-nodejs-ci/app' '--dockerfile=Dockerfile' --no-push '--tar-path=/home/jenkins/agent/workspace/sample-nodejs-ci/image.tar' '--destination=ghcr.io/barfeldman/sample-nodejs:sha-7a6d7db'
+[36mINFO[0m[0000] Resolved base name node:22-alpine to build   
+[36mINFO[0m[0000] Resolved base name node:22-alpine to runtime 
+[36mINFO[0m[0000] Using dockerignore file: /home/jenkins/agent/workspace/sample-nodejs-ci/app/.dockerignore 
+[36mINFO[0m[0000] Retrieving image manifest node:22-alpine     
+[36mINFO[0m[0000] Retrieving image node:22-alpine from registry index.docker.io 
+[36mINFO[0m[0001] Retrieving image manifest node:22-alpine     
+[36mINFO[0m[0001] Returning cached image manifest              
+[36mINFO[0m[0001] Built cross stage deps: map[0:[/app/node_modules /app/package.json /app/app.js]] 
+[36mINFO[0m[0001] Retrieving image manifest node:22-alpine     
+[36mINFO[0m[0001] Returning cached image manifest              
+[36mINFO[0m[0001] Executing 0 build triggers                   
+[36mINFO[0m[0001] Building stage 'node:22-alpine' [idx: '0', base-idx: '-1'] 
+[36mINFO[0m[0001] Unpacking rootfs as cmd COPY package.json package-lock.json ./ requires it. 
+[36mINFO[0m[0003] WORKDIR /app                                 
+[36mINFO[0m[0003] Cmd: workdir                                 
+[36mINFO[0m[0003] Changed working directory to /app            
+[36mINFO[0m[0003] Creating directory /app with uid -1 and gid -1 
+[36mINFO[0m[0003] Taking snapshot of files...                  
+[36mINFO[0m[0003] COPY package.json package-lock.json ./       
+[36mINFO[0m[0003] Taking snapshot of files...                  
+[36mINFO[0m[0003] RUN npm ci --omit=dev && npm cache clean --force 
+[36mINFO[0m[0003] Initializing snapshotter ...                 
+[36mINFO[0m[0003] Taking snapshot of full filesystem...        
+[36mINFO[0m[0003] Cmd: /bin/sh                                 
+[36mINFO[0m[0003] Args: [-c npm ci --omit=dev && npm cache clean --force] 
+[36mINFO[0m[0003] Running: [/bin/sh -c npm ci --omit=dev && npm cache clean --force] 
+
+added 77 packages, and audited 78 packages in 839ms
+
+15 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm notice
+npm notice New major version of npm available! 10.9.8 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+npm warn using --force Recommended protections disabled.
+[36mINFO[0m[0004] Taking snapshot of full filesystem...        
+[36mINFO[0m[0004] COPY app.js ./                               
+[36mINFO[0m[0004] Taking snapshot of files...                  
+[36mINFO[0m[0004] Saving file app/node_modules for later use   
+[36mINFO[0m[0005] Saving file app/package.json for later use   
+[36mINFO[0m[0005] Saving file app/app.js for later use         
+[36mINFO[0m[0005] Deleting filesystem...                       
+[36mINFO[0m[0005] Retrieving image manifest node:22-alpine     
+[36mINFO[0m[0005] Returning cached image manifest              
+[36mINFO[0m[0005] Executing 0 build triggers                   
+[36mINFO[0m[0005] Building stage 'node:22-alpine' [idx: '1', base-idx: '-1'] 
+[36mINFO[0m[0005] Unpacking rootfs as cmd RUN apk --no-cache upgrade  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx requires it. 
+[36mINFO[0m[0006] ENV NODE_ENV=production     PORT=8080        
+[36mINFO[0m[0006] WORKDIR /app                                 
+[36mINFO[0m[0006] Cmd: workdir                                 
+[36mINFO[0m[0006] Changed working directory to /app            
+[36mINFO[0m[0006] Creating directory /app with uid -1 and gid -1 
+[36mINFO[0m[0006] Taking snapshot of files...                  
+[36mINFO[0m[0006] RUN apk --no-cache upgrade  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx 
+[36mINFO[0m[0006] Initializing snapshotter ...                 
+[36mINFO[0m[0006] Taking snapshot of full filesystem...        
+[36mINFO[0m[0007] Cmd: /bin/sh                                 
+[36mINFO[0m[0007] Args: [-c apk --no-cache upgrade  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx] 
+[36mINFO[0m[0007] Running: [/bin/sh -c apk --no-cache upgrade  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx] 
+Preupgrading:
+(1/2) Upgrading libapk (3.0.6-r0 -> 3.0.7-r0)
+(2/2) Upgrading apk-tools (3.0.6-r0 -> 3.0.7-r0)
+Executing busybox-1.37.0-r31.trigger
+Continuing with the main upgrade transaction:
+(1/2) Upgrading libcrypto3 (3.5.7-r0 -> 3.5.8-r0)
+(2/2) Upgrading libssl3 (3.5.7-r0 -> 3.5.8-r0)
+OK: 11.1 MiB in 18 packages
+[36mINFO[0m[0008] Taking snapshot of full filesystem...        
+[36mINFO[0m[0008] COPY --from=build --chown=node:node /app/node_modules ./node_modules 
+[36mINFO[0m[0009] Taking snapshot of files...                  
+[36mINFO[0m[0009] COPY --from=build --chown=node:node /app/package.json ./package.json 
+[36mINFO[0m[0009] Taking snapshot of files...                  
+[36mINFO[0m[0009] COPY --from=build --chown=node:node /app/app.js ./app.js 
+[36mINFO[0m[0009] Taking snapshot of files...                  
+[36mINFO[0m[0009] USER node                                    
+[36mINFO[0m[0009] Cmd: USER                                    
+[36mINFO[0m[0009] EXPOSE 8080                                  
+[36mINFO[0m[0009] Cmd: EXPOSE                                  
+[36mINFO[0m[0009] Adding exposed port: 8080/tcp                
+[36mINFO[0m[0009] HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3   CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||8080)+'/live',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" 
+[36mINFO[0m[0009] CMD ["node", "app.js"]                       
+[36mINFO[0m[0010] Skipping push to container registry due to --no-push flag 
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Image Scan (Trivy))
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
++ trivy image --input /home/jenkins/agent/workspace/sample-nodejs-ci/image.tar --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --format table
+2026-08-26T20:30:03Z	INFO	[db] Need to update DB
+2026-08-26T20:30:03Z	INFO	[db] Downloading DB...	repository="ghcr.io/aquasecurity/trivy-db:2"
+2026-08-26T20:30:11Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-08-26T20:30:12Z	INFO	Detected OS	family="alpine" version="3.24.1"
+2026-08-26T20:30:12Z	WARN	This OS version is not on the EOL list	family="alpine" version="3.24"
+2026-08-26T20:30:12Z	INFO	[alpine] Detecting vulnerabilities...	os_version="3.24" repository="3.24" pkg_num=18
+2026-08-26T20:30:12Z	INFO	Number of language-specific files	num=1
+2026-08-26T20:30:12Z	INFO	[node-pkg] Detecting vulnerabilities...
+
+For OSS Maintainers: VEX Notice
+--------------------------------
+If you're an OSS maintainer and Trivy has detected vulnerabilities in your project that you believe are not actually exploitable, consider issuing a VEX (Vulnerability Exploitability eXchange) statement.
+VEX allows you to communicate the actual status of vulnerabilities in your project, improving security transparency and reducing false positives for your users.
+Learn more and start using VEX: https://aquasecurity.github.io/trivy/v0.55/docs/supply-chain/vex/repo#publishing-vex-documents
+
+To disable this notice, set the TRIVY_DISABLE_VEX_NOTICE environment variable.
+
+
+/home/jenkins/agent/workspace/sample-nodejs-ci/image.tar (alpine 3.24.1)
+========================================================================
+Total: 0 (HIGH: 0, CRITICAL: 0)
+
+[Pipeline] sh
++ trivy image --input /home/jenkins/agent/workspace/sample-nodejs-ci/image.tar --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-report.json
+2026-08-26T20:30:13Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-08-26T20:30:13Z	INFO	[secret] Secret scanning is enabled
+2026-08-26T20:30:13Z	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-08-26T20:30:13Z	INFO	[secret] Please see also https://aquasecurity.github.io/trivy/v0.55/docs/scanner/secret#recommendation for faster secret detection
+2026-08-26T20:30:14Z	INFO	Detected OS	family="alpine" version="3.24.1"
+2026-08-26T20:30:14Z	WARN	This OS version is not on the EOL list	family="alpine" version="3.24"
+2026-08-26T20:30:14Z	INFO	[alpine] Detecting vulnerabilities...	os_version="3.24" repository="3.24" pkg_num=18
+2026-08-26T20:30:14Z	INFO	Number of language-specific files	num=1
+2026-08-26T20:30:14Z	INFO	[node-pkg] Detecting vulnerabilities...
+[Pipeline] }
+[Pipeline] // container
+Post stage
+[Pipeline] archiveArtifacts
+Archiving artifacts
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Push Image (skopeo))
+Stage "Push Image (skopeo)" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Promote (GitOps))
+Stage "Promote (GitOps)" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+Pipeline succeeded. Image: ghcr.io/barfeldman/sample-nodejs:sha-7a6d7db
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+Finished: SUCCESS

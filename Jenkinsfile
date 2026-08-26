@@ -67,7 +67,6 @@ spec:
   }
 
   options {
-    timestamps()
     timeout(time: 30, unit: 'MINUTES')
     buildDiscarder(logRotator(numToKeepStr: '20'))
     disableConcurrentBuilds()
@@ -87,8 +86,11 @@ spec:
   stages {
     stage('Checkout') {
       steps {
-        checkout scm
         container('git') {
+          checkout scm
+          // Agent workspace is owned by a different UID than this container's
+          // git; mark it safe so raw git commands don't abort (exit 128).
+          sh 'git config --global --add safe.directory "*"'
           script {
             env.SHORT_SHA = sh(returnStdout: true, script: 'git rev-parse --short=7 HEAD').trim()
             def lastMsg   = sh(returnStdout: true, script: 'git log -1 --pretty=%B').trim()
