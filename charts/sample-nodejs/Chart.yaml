@@ -1,0 +1,15 @@
+apiVersion: v2
+name: sample-nodejs
+description: A Helm chart to deploy the sample Node.js application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - nodejs
+  - sample
+  - devops
+home: https://github.com/barfeldman/devops-task
+sources:
+  - https://github.com/barfeldman/devops-task
+maintainers:
+  - name: barfeldman

@@ -1,0 +1,120 @@
+# Default values for sample-nodejs.
+
+# Replica count (ignored when autoscaling is enabled).
+replicaCount: 2
+
+image:
+  repository: ghcr.io/barfeldman/sample-nodejs
+  # Defaults to the chart appVersion when empty. CI/GitOps overrides this with
+  # the immutable build tag to promote a new version.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Secrets used to pull from a private registry, e.g. [{ name: regcred }].
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  # App does not talk to the Kubernetes API -> do not mount a token.
+  automount: false
+  annotations: {}
+
+# Extra pod annotations. Defaults enable Prometheus scraping of /metrics.
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Pod-level security context (least privilege).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container-level security context (hardened; needs a writable /tmp emptyDir).
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: sample-nodejs.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: sample-nodejs-tls
+  #   hosts:
+  #     - sample-nodejs.local
+
+# Resource requests and limits.
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /live
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Non-sensitive env vars -> ConfigMap (consumed via envFrom).
+env:
+  PORT: "8080"
+  NODE_ENV: "production"
+
+# Additional non-sensitive config -> same ConfigMap.
+config: {}
+
+# Sensitive values -> Secret (consumed via envFrom). Example:
+# secret:
+#   data:
+#     API_TOKEN: "changeme"
+secret:
+  data: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,19 @@
+{{ .Chart.Name }} ({{ include "sample-nodejs.fullname" . }}) has been deployed.
+
+{{- if .Values.ingress.enabled }}
+
+Access it via the configured Ingress host(s):
+{{- range .Values.ingress.hosts }}
+  http://{{ .host }}{{ (first .paths).path }}
+{{- end }}
+
+Note: point the host to your ingress controller (DNS or /etc/hosts) if needed.
+{{- else }}
+
+The Service is ClusterIP. Reach the app with a port-forward:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "sample-nodejs.fullname" . }} 8080:{{ .Values.service.port }}
+  open http://127.0.0.1:8080/my-app
+{{- end }}
+
+Verify rollout:
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "sample-nodejs.fullname" . }}
