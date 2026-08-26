@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: devops-task
+  namespace: argocd
+spec:
+  description: DevOps challenge - sample Node.js application
+  # Only this repository may be used as a source.
+  sourceRepos:
+    - https://github.com/barfeldman/devops-task.git
+  # Only this cluster/namespace may be deployed to.
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: sample-nodejs
+  # Allow creating the target Namespace, nothing else cluster-scoped.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true

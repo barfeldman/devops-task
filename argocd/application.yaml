@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-nodejs
+  namespace: argocd
+  # Cascade-delete managed resources when the Application is removed.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: devops-task
+  # GitOps: ArgoCD pulls the Helm chart straight from the app repo. CI promotes
+  # a new version by committing an updated image.tag in the chart values.
+  source:
+    repoURL: https://github.com/barfeldman/devops-task.git
+    targetRevision: main
+    path: charts/sample-nodejs
+    helm:
+      releaseName: sample-nodejs
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sample-nodejs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
