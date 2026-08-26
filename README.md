@@ -148,10 +148,15 @@ answered 200 on every route through the nginx ingress. The screenshots and a ful
 
 ## A few honest notes
 
-The Jenkinsfile itself hasn't run on a real Jenkins. I don't have a controller
-set up, so I validated it by compiling the Groovy and pulling each tool image to
-confirm its shell, but it hasn't executed end to end. Everything downstream of it
-(the chart, the Argo config, the actual deploy) is the part I proved live.
+The Jenkinsfile itself hasn't run on a real Jenkins controller (I don't have one
+set up), so the orchestration is validated by compiling the Groovy and checking
+each tool image. The gates aren't just theory, though. I ran Semgrep, `npm audit`
+and Trivy against this code and image the same way the pipeline does, and two of
+them found real problems: the audit flagged vulnerable Express transitive deps,
+and Trivy caught npm's own bundled packages plus an OpenSSL CVE in the base
+image. That's why the lockfile is patched and the Dockerfile drops npm and runs
+`apk upgrade`. After those fixes all three come back clean (Semgrep 0 findings,
+audit 0 vulnerabilities, Trivy 0 HIGH/CRITICAL).
 
 The image in the demo was built locally and loaded into minikube rather than
 pushed to GHCR, since that push belongs to the pipeline and my token doesn't have

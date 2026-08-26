@@ -21,6 +21,11 @@ ENV NODE_ENV=production \
     PORT=8080
 WORKDIR /app
 
+# Apply available OS security patches, and drop npm (not needed at runtime;
+# removing it also strips npm's bundled deps from image scans).
+RUN apk --no-cache upgrade \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Copy vetted modules and source from the build stage
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/package.json ./package.json
