@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+*.tgz
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+kubeconfig
+*.kubeconfig
+
+# Helm
+charts/**/charts/
+*.lock
+
+# Build / test artifacts
+coverage/
+dist/
+build/
+*.log
+trivy-results.*
+*.sarif
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
