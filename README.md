@@ -1,181 +1,160 @@
-# DevOps / DevSecOps Challenge — Node.js on Kubernetes
+# Sample Node.js app on Kubernetes
 
-Submission for the DevOps/DevSecOps take-home challenge. It vendors the sample
+This is my write-up for the DevOps/DevSecOps exercise. I forked the sample Node
 app from [EladAviczer/sample-nodejs](https://github.com/EladAviczer/sample-nodejs),
-containerizes it, deploys it to Kubernetes with a Helm chart, and drives the
-whole lifecycle through a Jenkins CI/CD pipeline with DevSecOps gates and GitOps
-delivery via ArgoCD.
+containerised it, wrote a Helm chart, and put a Jenkins pipeline in front of it
+that builds, tests, scans and ships. Argo CD does the actual deploy straight from
+Git.
 
-## Repository structure
+Everything lives in this one repo:
 
-| Path | Purpose |
+- `app/` is the Node app, its Dockerfile and a small smoke test
+- `charts/sample-nodejs/` is the Helm chart
+- `Jenkinsfile` is the pipeline
+- `argocd/` holds the Argo CD project and application
+- `docs/` has the original task, the architecture diagram and the deploy screenshots
+
+## The app
+
+It's a tiny Express server on port 8080. A few routes and not much else:
+
+| Route | What it returns |
 | --- | --- |
-| `app/` | Vendored Node.js application, `Dockerfile`, and smoke test |
-| `charts/sample-nodejs/` | Helm chart used to deploy the app |
-| `Jenkinsfile` | Jenkins CI/CD pipeline (test, scan, build, push, promote) |
-| `argocd/` | ArgoCD `AppProject` + `Application` manifests (GitOps) |
-| `docs/` | Task brief |
-
-## The application
-
-A lightweight Express.js service listening on port `8080` (override with `PORT`).
-
-| Route | Purpose |
-| --- | --- |
-| `/my-app` | Main page (`Hello, World!`), increments a Prometheus counter |
-| `/about` | Static info |
-| `/ready` | Readiness probe endpoint |
-| `/live` | Liveness probe endpoint |
-| `/classified` | Demo endpoint |
+| `/my-app` | `Hello, World!` and bumps a Prometheus counter |
+| `/about` | a one-line description |
+| `/ready` | 200, used for the readiness probe |
+| `/live` | 200, used for the liveness probe |
+| `/classified` | a throwaway endpoint |
 | `/metrics` | Prometheus metrics |
 
-Dependencies: `express`, `prom-client`.
+The only dependencies are `express` and `prom-client`. There were no tests in the
+original, so I added a smoke test under `app/test/` that boots the server and
+checks the main routes actually answer. That runs as the first gate in CI.
 
-## Architecture & CI/CD flow
+## How it fits together
 
-```mermaid
-flowchart LR
-    dev[Developer] -->|git push| repo[(GitHub repo)]
-    repo -->|webhook| jenkins[Jenkins pipeline]
-    subgraph CICD
-      jenkins --> test[Install & smoke test]
-      test --> sast[Semgrep SAST + npm audit]
-      sast --> bump[Version bump]
-      bump --> build[Kaniko build -> tar]
-      build --> scan[Trivy scan]
-      scan --> gate{HIGH/CRITICAL?}
-      gate -->|no| push[skopeo push image]
-      push --> promote[Commit new image tag]
-    end
-    push --> registry[(Container registry)]
-    promote -->|git| repo
-    repo -->|reconcile| argocd[ArgoCD]
-    argocd -->|helm upgrade| k8s[(Kubernetes)]
-    registry -.pull image.-> k8s
-```
+![Architecture](docs/architecture.png)
 
-The pipeline **builds, then scans, then pushes** — a vulnerable image never
-reaches the registry. Deployment is fully GitOps: CI only commits a new image
-tag; ArgoCD is the sole component that talks to the cluster.
+The flow is what you'd expect. You push to GitHub, Jenkins picks it up and runs
+through its stages, and if everything passes it pushes the image and writes the
+new tag back into the chart values. Argo CD notices that commit and brings the
+cluster in line with it. Traffic reaches the app only through the ingress.
 
-## Key decisions & justifications
+One detail I care about: the pipeline builds the image, scans it, and *then*
+pushes. If Trivy finds something serious the image never lands in the registry,
+so a bad build can't be deployed by accident. The diagram source is in
+`docs/architecture.svg` if you want to tweak it.
 
-### Workload type — `Deployment` (not `StatefulSet`)
-The app is **stateless**: no persistent volumes, no stable network identity, no
-ordering requirements. Its only "state" (the Prometheus counter) is in-memory
-and scrape-based. A `Deployment` gives cheap horizontal scaling, rolling
-updates, and easy self-healing. A `StatefulSet` would add stable identities and
-ordered, serial rollouts we simply don't need. The chart also ships an optional
-`HorizontalPodAutoscaler`, which pairs naturally with a `Deployment`.
+## Why I built it this way
 
-### CI/CD — Jenkins on Kubernetes
-A declarative `Jenkinsfile` runs on **ephemeral Kubernetes pod agents**, one
-container per tool (node, semgrep, kaniko, trivy, skopeo, git). Benefits: clean,
-reproducible, isolated build environments with no tools installed on a static
-agent, and it mirrors the target runtime (Kubernetes).
+**Deployment over StatefulSet.** The app keeps nothing around between requests.
+No volumes, no stable hostnames, no leader election, and the only "state" (the
+request counter) lives in memory and is scraped by Prometheus anyway. So a plain
+Deployment is the honest choice. It gives me rolling updates and easy scaling,
+and it lets me bolt on an HPA later without fighting the workload type. A
+StatefulSet would buy stable identities and ordered rollouts that this app has no
+use for.
 
-### Image build — Kaniko + skopeo (no Docker daemon)
-Kaniko builds images **rootless, without a Docker daemon**, which is the right
-fit inside a Kubernetes pod. Crucially, Kaniko builds to a **local tarball**
-(`--no-push`); Trivy scans that tarball; only if it passes does **skopeo** push
-it. This ordering is what enforces "block deployment on high-severity findings"
-— the artifact is gated *before* it is published.
+**Jenkins running on Kubernetes.** Each stage runs in its own container inside a
+throwaway pod (node, semgrep, kaniko, trivy, skopeo, git). I like this because
+there's nothing to install or keep patched on a static agent, every build starts
+clean, and the build environment looks like where the app actually runs.
 
-### GitOps — ArgoCD pulling from the app repo
-Two options were on the table: (a) a separate GitOps repo, or (b) ArgoCD reading
-manifests from the app repo. This submission uses **(b)** because:
-- It's a single application — one source of truth keeps app code, chart, and the
-  deployed version together and atomically reviewable in one history.
-- A separate repo adds cross-repo credential/PR overhead that only pays off at
-  multi-app / multi-team scale.
+**Kaniko plus skopeo instead of Docker.** There's no Docker daemon inside a build
+pod, and I didn't want to mount a host socket. Kaniko builds rootless. The catch
+is that I want to scan before publishing, so Kaniko writes the image to a local
+tarball, Trivy scans that, and only then does skopeo push it. That ordering is
+the whole point of "block the deploy on a bad image", and you can't get it if you
+build and push in one shot.
 
-Promotion stays declarative: CI commits the new `image.tag` into the chart
-values, and ArgoCD (auto-sync + self-heal + prune) reconciles the cluster to
-match Git. At larger scale the same pipeline can be pointed at a dedicated
-environments repo with almost no change.
+While I was at it I checked the tool images by hand, because crane's debug image
+has no `/bin/sh` and would have quietly broken the Jenkins `sh` step. skopeo has a
+real shell, so that's what I used for the push.
 
-## DevSecOps controls
+**Argo CD reading from this repo.** The exercise let me choose between a separate
+GitOps repo and pointing Argo at the app repo. For a single service I went with
+the same repo. The app, the chart and the deployed version all move together in
+one history, which is easier to review and reason about. A dedicated environments
+repo earns its keep once you've got several apps or teams, and the pipeline would
+barely change if I split it out later. Promotion stays declarative either way:
+CI just commits a new image tag and Argo does the rest.
 
-| Control | Tool | Gate |
-| --- | --- | --- |
-| SAST (code) | Semgrep (OWASP-listed) | Fails build on `ERROR`-severity findings |
-| Dependency audit | `npm audit` | Fails build on `critical` vulnerabilities |
-| Image vulnerability scan | Trivy | **Blocks push/deploy** on `HIGH`/`CRITICAL` (unfixed excluded) |
-| Least-privilege runtime | Helm chart | Non-root (UID 1000), read-only rootfs, drop all caps, seccomp `RuntimeDefault`, SA token automount off |
-| Supply chain | Kaniko + skopeo | Build -> scan -> push (scan before publish) |
+## Security
 
-## How to run
+Most of the security work is in two places. In CI, Semgrep runs as the SAST step
+and fails the build on high-severity findings, `npm audit` fails on critical
+dependency issues, and Trivy blocks anything with HIGH or CRITICAL image CVEs
+before the push. I left `--ignore-unfixed` on for Trivy so it doesn't wedge the
+pipeline on base-image CVEs that have no patch yet.
 
-### 1. Build and test the container locally
+At runtime the chart runs the container as non-root (UID 1000), with a read-only
+root filesystem (there's a small emptyDir for `/tmp`), all Linux capabilities
+dropped, the default seccomp profile on, and the service account token not
+mounted since the app never talks to the API server.
+
+## Running it
+
+Locally, without Kubernetes:
+
 ```bash
 cd app
 npm ci
-npm test                       # smoke test hits /ready /live /my-app /about /metrics
+npm test
 docker build -t sample-nodejs:local .
 docker run --rm -p 8080:8080 sample-nodejs:local
-curl localhost:8080/my-app     # -> Hello, World!
+curl localhost:8080/my-app
 ```
 
-### 2. Deploy with Helm (manual)
+On a cluster with Helm directly:
+
 ```bash
-helm lint charts/sample-nodejs
 helm upgrade --install sample-nodejs charts/sample-nodejs \
   --namespace sample-nodejs --create-namespace \
   --set image.tag=<tag>
-kubectl -n sample-nodejs rollout status deploy/sample-nodejs
 ```
 
-### 3. Deploy with ArgoCD (GitOps — recommended)
+Or the GitOps way, which is how it's meant to run:
+
 ```bash
 kubectl apply -f argocd/project.yaml
 kubectl apply -f argocd/application.yaml
-# ArgoCD creates the namespace and syncs the chart automatically.
-argocd app get sample-nodejs
 ```
 
-### 4. Access the app
-The chart provisions an Ingress (class `nginx`) for host `sample-nodejs.local`.
-Point that host at your ingress controller (DNS or `/etc/hosts`) and browse:
-```
-http://sample-nodejs.local/my-app
-```
-Or without ingress, port-forward:
+The chart creates an ingress for `sample-nodejs.local`, so point that name at
+your ingress controller and open `http://sample-nodejs.local/my-app`. If you'd
+rather skip DNS, just port-forward the service:
+
 ```bash
 kubectl -n sample-nodejs port-forward svc/sample-nodejs 8080:80
 curl localhost:8080/my-app
 ```
 
-### 5. CI/CD (Jenkins) prerequisites
-Configure the pipeline job as **Multibranch** / *Pipeline from SCM* pointing at
-this repo, with a Kubernetes cloud configured, and these credentials in the
-agent namespace / Jenkins:
-- `regcred` — a Kubernetes `dockerconfigjson` Secret used to push images.
-- `github-credentials` — username + token used for the GitOps promotion commit.
+If you want to run the pipeline yourself, the job should be a Multibranch or
+"Pipeline from SCM" job with a Kubernetes cloud configured. It needs two things
+wired up: a `regcred` docker-config secret for pushing images, and a
+`github-credentials` username/token for the promotion commit.
 
-On `main`, a successful run bumps the version, builds, scans, pushes, and commits
-the new image tag back — ArgoCD then rolls it out.
+## Proof it actually runs
 
-## Deployment proof (minikube)
+I didn't just template it and call it done. I stood the whole thing up on
+minikube and deployed through Argo CD, not with a manual `helm install`. Argo
+reported everything synced and healthy against commit `f16d266`, and the app
+answered 200 on every route through the nginx ingress. The screenshots and a full
+`kubectl` dump are in [`docs/proof/`](docs/proof/).
 
-The app was deployed end-to-end via the **ArgoCD GitOps path** on a local
-minikube cluster (Kubernetes v1.35.1) and reached from a browser through the
-nginx Ingress. Evidence lives in [`docs/proof/`](docs/proof/):
-
-- ArgoCD reconciled `charts/sample-nodejs` straight from this repo at commit
-  `f16d266`, reporting **Synced + Healthy** for every resource (ConfigMap,
-  Service, ServiceAccount, Deployment → ReplicaSet → 2 Pods, Ingress).
-- All endpoints return `200` through the Ingress host `sample-nodejs.local`.
-
-| ArgoCD — Synced + Healthy | App served via Ingress |
+| Argo CD | The app through the ingress |
 | --- | --- |
-| ![ArgoCD app tree](docs/proof/argocd-app-tree.png) | ![Ingress /my-app](docs/proof/ingress-my-app.png) |
+| ![Argo CD](docs/proof/argocd-app-tree.png) | ![App](docs/proof/ingress-my-app.png) |
 
-Full cluster state: [`docs/proof/cluster-state.txt`](docs/proof/cluster-state.txt).
+## A few honest notes
 
-## Git workflow
+The Jenkinsfile itself hasn't run on a real Jenkins. I don't have a controller
+set up, so I validated it by compiling the Groovy and pulling each tool image to
+confirm its shell, but it hasn't executed end to end. Everything downstream of it
+(the chart, the Argo config, the actual deploy) is the part I proved live.
 
-Trunk-based: short-lived feature branches open PRs into `main`. On branches/PRs
-the pipeline runs test -> SAST -> build -> scan (no push/deploy). On `main` it
-also bumps the patch version, pushes the image, tags the release `vX.Y.Z`, and
-promotes via GitOps. The promotion commit carries `[skip ci]` (and the pipeline
-guards against it) to avoid build loops.
+The image in the demo was built locally and loaded into minikube rather than
+pushed to GHCR, since that push belongs to the pipeline and my token doesn't have
+package write scope. The version bump is a simple patch bump on `main`; the
+promotion commit carries `[skip ci]` and the pipeline also guards against it so it
+can't trigger itself in a loop.
