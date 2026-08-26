@@ -1,0 +1,46 @@
+# Deployment proof — minikube (Wed Aug 26 15:59:31 IDT 2026)
+
+## kubectl context / node
+minikube
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   34m   v1.35.1
+
+## ArgoCD Application status
+NAME            SYNC     HEALTH    REVISION                                   REPO
+sample-nodejs   Synced   Healthy   f16d2662a556d8108b2eab752c5114d64b530a26   https://github.com/barfeldman/devops-task.git
+
+## Deployed workload (namespace sample-nodejs)
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS      IMAGES                                   SELECTOR
+deployment.apps/sample-nodejs   2/2     2            2           6m7s   sample-nodejs   ghcr.io/barfeldman/sample-nodejs:1.0.0   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
+
+NAME                                       DESIRED   CURRENT   READY   AGE    CONTAINERS      IMAGES                                   SELECTOR
+replicaset.apps/sample-nodejs-746c7f8bd5   2         2         2       6m7s   sample-nodejs   ghcr.io/barfeldman/sample-nodejs:1.0.0   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs,pod-template-hash=746c7f8bd5
+
+NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE       NOMINATED NODE   READINESS GATES
+pod/sample-nodejs-746c7f8bd5-5stmr   1/1     Running   0          6m7s   10.244.0.13   minikube   <none>           <none>
+pod/sample-nodejs-746c7f8bd5-jvzkz   1/1     Running   0          6m7s   10.244.0.14   minikube   <none>           <none>
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE    SELECTOR
+service/sample-nodejs   ClusterIP   10.110.150.246   <none>        80/TCP    6m7s   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
+
+NAME                                      CLASS   HOSTS                 ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/sample-nodejs   nginx   sample-nodejs.local   192.168.49.2   80      6m7s
+
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      6m8s
+configmap/sample-nodejs      2      6m7s
+
+NAME                           AGE
+serviceaccount/default         6m8s
+serviceaccount/sample-nodejs   6m8s
+
+## Running image
+sample-nodejs-746c7f8bd5-5stmr  ghcr.io/barfeldman/sample-nodejs:1.0.0
+sample-nodejs-746c7f8bd5-jvzkz  ghcr.io/barfeldman/sample-nodejs:1.0.0
+
+## Endpoint checks through nginx Ingress (Host: sample-nodejs.local)
+/my-app   HTTP 200
+/about    HTTP 200
+/ready    HTTP 200
+/live     HTTP 200
+/metrics  HTTP 200

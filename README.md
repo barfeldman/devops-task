@@ -155,6 +155,23 @@ agent namespace / Jenkins:
 On `main`, a successful run bumps the version, builds, scans, pushes, and commits
 the new image tag back — ArgoCD then rolls it out.
 
+## Deployment proof (minikube)
+
+The app was deployed end-to-end via the **ArgoCD GitOps path** on a local
+minikube cluster (Kubernetes v1.35.1) and reached from a browser through the
+nginx Ingress. Evidence lives in [`docs/proof/`](docs/proof/):
+
+- ArgoCD reconciled `charts/sample-nodejs` straight from this repo at commit
+  `f16d266`, reporting **Synced + Healthy** for every resource (ConfigMap,
+  Service, ServiceAccount, Deployment → ReplicaSet → 2 Pods, Ingress).
+- All endpoints return `200` through the Ingress host `sample-nodejs.local`.
+
+| ArgoCD — Synced + Healthy | App served via Ingress |
+| --- | --- |
+| ![ArgoCD app tree](docs/proof/argocd-app-tree.png) | ![Ingress /my-app](docs/proof/ingress-my-app.png) |
+
+Full cluster state: [`docs/proof/cluster-state.txt`](docs/proof/cluster-state.txt).
+
 ## Git workflow
 
 Trunk-based: short-lived feature branches open PRs into `main`. On branches/PRs
