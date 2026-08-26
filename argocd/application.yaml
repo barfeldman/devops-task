@@ -18,6 +18,11 @@ spec:
       releaseName: sample-nodejs
       valueFiles:
         - values.yaml
+      # This deployment sources its secret from Vault (via the Vault Secrets
+      # Operator). Requires Vault + VSO on the cluster.
+      parameters:
+        - name: vault.enabled
+          value: "true"
   destination:
     server: https://kubernetes.default.svc
     namespace: sample-nodejs
