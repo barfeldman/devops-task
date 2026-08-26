@@ -4,6 +4,9 @@ const promClient = require('prom-client');
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Secret injected from Vault (via the Vault Secrets Operator) at runtime.
+const apiToken = process.env.API_TOKEN;
+
 // Create a Registry to register the metrics
 const register = new promClient.Registry();
 
@@ -37,7 +40,10 @@ app.get('/live', (req, res) => {
 });
 
 app.get('/classified', (req, res) => {
-    res.status(200).send('You should not be here!!!');
+    if (apiToken && req.get('x-api-token') === apiToken) {
+        return res.status(200).send('Access granted to classified data.');
+    }
+    return res.status(401).send('Unauthorized');
 });
 
 app.get('/metrics', async (req, res) => {
@@ -47,4 +53,6 @@ app.get('/metrics', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    // Never log the value; only whether the secret was wired in.
+    console.log(`API_TOKEN configured: ${Boolean(apiToken)}`);
 });

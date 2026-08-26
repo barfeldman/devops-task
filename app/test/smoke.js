@@ -41,6 +41,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       ['/my-app', 200],
       ['/about', 200],
       ['/metrics', 200],
+      ['/classified', 401],
     ];
 
     for (const [path, expected] of checks) {

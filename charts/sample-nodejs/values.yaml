@@ -115,6 +115,26 @@ config: {}
 secret:
   data: {}
 
+# HashiCorp Vault integration via the Vault Secrets Operator (VSO).
+# When enabled, VSO reads the secret from Vault and syncs it into a native
+# K8s Secret that the Deployment consumes via envFrom. No secret values live
+# in Git or in this chart - only the Vault location and the auth role.
+vault:
+  enabled: false
+  # Vault server address reachable from the cluster.
+  address: "http://vault.vault.svc:8200"
+  # KV v2 mount and path that hold the app secret.
+  mount: "secret"
+  path: "sample-nodejs"
+  # Kubernetes auth role in Vault, bound to this app's ServiceAccount.
+  role: "sample-nodejs"
+  # Audience of the ServiceAccount token VSO presents to Vault.
+  audience: "vault"
+  # How often VSO re-reads Vault (enables rotation).
+  refreshAfter: "30s"
+  # Name of the K8s Secret VSO creates and the app consumes.
+  secretName: "sample-nodejs-vault"
+
 nodeSelector: {}
 tolerations: []
 affinity: {}

@@ -44,7 +44,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "sample-nodejs.fullname" . }}
-            {{- if .Values.secret.data }}
+            {{- if .Values.vault.enabled }}
+            - secretRef:
+                name: {{ .Values.vault.secretName }}
+            {{- else if .Values.secret.data }}
             - secretRef:
                 name: {{ include "sample-nodejs.fullname" . }}
             {{- end }}
