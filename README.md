@@ -110,7 +110,12 @@ changes, so rotation is a `vault kv put` away. All of this is gated behind
 `vault.enabled` in the chart: the Vault path and the auth role live in Git, the
 secret value never does. Setup is in
 [`vault/configure-vault.sh`](vault/configure-vault.sh) and there's an end-to-end
-trace in [`docs/proof/vault-secrets.txt`](docs/proof/vault-secrets.txt).
+trace in [`docs/proof/vault-secrets.txt`](docs/proof/vault-secrets.txt). Argo CD
+manages the Vault resources alongside the app (`vaultconnection`, `vaultauth` and
+`vaultstaticsecret` appear in the resource tree further down), and the secret
+itself lives in Vault:
+
+![Secret in Vault](docs/proof/vault-ui.png)
 
 The demo runs a single-node Vault that I initialised and unsealed by hand (the
 unseal keys stay in a git-ignored file). For real production I'd add auto-unseal
@@ -164,11 +169,13 @@ wired up: a `regcred` docker-config secret for pushing images, and a
 
 I didn't just template it and call it done. I stood the whole thing up on
 minikube and deployed through Argo CD, not with a manual `helm install`. Argo
-reported everything synced and healthy against commit `f16d266`, and the app
-answered 200 on every route through the nginx ingress. The screenshots and a full
-`kubectl` dump are in [`docs/proof/`](docs/proof/).
+reported everything synced and healthy, and the app answered 200 on every route
+through the nginx ingress. The resource tree below also includes the Vault
+resources (`vaultconnection`, `vaultauth`, `vaultstaticsecret`) that feed the app
+its secret. The screenshots and a full `kubectl` dump are in
+[`docs/proof/`](docs/proof/).
 
-| Argo CD | The app through the ingress |
+| Argo CD (app + Vault resources) | The app through the ingress |
 | --- | --- |
 | ![Argo CD](docs/proof/argocd-app-tree.png) | ![App](docs/proof/ingress-my-app.png) |
 
