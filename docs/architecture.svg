@@ -74,9 +74,16 @@
   <text x="930" y="513" text-anchor="middle" font-size="12" fill="#1f2933">Pod &#183; sample-nodejs</text>
 
   <rect x="840" y="562" width="180" height="42" rx="6" fill="#ffffff" stroke="#9aa5b1" stroke-dasharray="4 3"/>
-  <text x="930" y="587" text-anchor="middle" font-size="11" fill="#52616b">ConfigMap &#183; ServiceAccount</text>
+  <text x="930" y="587" text-anchor="middle" font-size="11" fill="#52616b">Secret &#183; ConfigMap &#183; SA</text>
 
-  <text x="628" y="656" font-size="10.5" font-style="italic" fill="#7b8794">namespace: sample-nodejs</text>
+  <!-- HashiCorp Vault + Vault Secrets Operator: source of the app Secret -->
+  <rect x="628" y="602" width="196" height="46" rx="6" fill="#fef9e7" stroke="#b7950b"/>
+  <text x="726" y="622" text-anchor="middle" font-size="11.5" fill="#1f2933">HashiCorp Vault + VSO</text>
+  <text x="726" y="638" text-anchor="middle" font-size="9.5" fill="#7d6608">Kubernetes auth &#183; KV v2</text>
+  <path d="M824,614 L 848,590" stroke="#b7950b" fill="none" marker-end="url(#arrow)"/>
+  <text x="806" y="598" font-size="9.5" fill="#7d6608">sync secret</text>
+
+  <text x="852" y="666" font-size="10.5" font-style="italic" fill="#7b8794">namespace: sample-nodejs</text>
 
   <!-- cluster internal arrows -->
   <path d="M703,480 V520" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>

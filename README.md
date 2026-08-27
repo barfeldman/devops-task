@@ -92,6 +92,32 @@ root filesystem (there's a small emptyDir for `/tmp`), all Linux capabilities
 dropped, the default seccomp profile on, and the service account token not
 mounted since the app never talks to the API server.
 
+## Secrets (HashiCorp Vault)
+
+Application secrets come from HashiCorp Vault, not from Git or plaintext
+manifests. The flow:
+
+1. The secret lives in Vault's KV v2 store at `secret/sample-nodejs`.
+2. The app's ServiceAccount authenticates to Vault with Kubernetes auth; a
+   least-privilege policy lets that role read only that one path.
+3. The Vault Secrets Operator (VSO) reads it and syncs it into a native
+   Kubernetes Secret, which the Deployment consumes via `envFrom`.
+4. The app reads `API_TOKEN` and uses it to protect `/classified` (200 with a
+   valid `x-api-token`, 401 otherwise). It never logs the value.
+
+VSO re-reads Vault on an interval and restarts the Deployment when the secret
+changes, so rotation is a `vault kv put` away. All of this is gated behind
+`vault.enabled` in the chart: the Vault path and the auth role live in Git, the
+secret value never does. Setup is in
+[`vault/configure-vault.sh`](vault/configure-vault.sh) and there's an end-to-end
+trace in [`docs/proof/vault-secrets.txt`](docs/proof/vault-secrets.txt).
+
+The demo runs a single-node Vault that I initialised and unsealed by hand (the
+unseal keys stay in a git-ignored file). For real production I'd add auto-unseal
+via a cloud KMS or Transit, TLS, an HA (raft) cluster, audit devices, shorter
+token TTLs, and I'd move the CI credentials (registry and Git tokens) into Vault
+the same way.
+
 ## Running it
 
 Locally, without Kubernetes:
