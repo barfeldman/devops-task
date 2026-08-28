@@ -31,14 +31,14 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/app.js ./app.js
 
-# Run as the image's built-in unprivileged user (UID 1000)
-USER node
+# Run as the image's built-in unprivileged user (UID 1000 = node)
+USER 1000
 
 EXPOSE 8080
 
-# Container healthcheck against the liveness endpoint
+# Container healthcheck against the liveness endpoint (exec form)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||8080)+'/live',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  CMD ["node", "-e", "require('http').get('http://127.0.0.1:'+(process.env.PORT||8080)+'/live',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
 
 # Exec form so SIGTERM reaches node for graceful shutdown
 CMD ["node", "app.js"]

@@ -16,3 +16,10 @@ spec:
       args:
         - "-sf"
         - "http://{{ include "sample-nodejs.fullname" . }}:{{ .Values.service.port }}/ready"
+      securityContext:
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL

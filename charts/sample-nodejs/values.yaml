@@ -4,7 +4,7 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/barfeldman/sample-nodejs
+  repository: docker.io/barfeldman/sample-nodejs
   # Defaults to the chart appVersion when empty. CI/GitOps overrides this with
   # the immutable build tag to promote a new version.
   tag: ""

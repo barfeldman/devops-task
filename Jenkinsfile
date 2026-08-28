@@ -62,6 +62,22 @@ spec:
       volumeMounts:
         - name: regcred
           mountPath: /skopeo/.docker
+    - name: gitleaks
+      image: ghcr.io/gitleaks/gitleaks:latest
+      command: ["sleep"]
+      args: ["infinity"]
+    - name: hadolint
+      image: hadolint/hadolint:2.12.0-alpine
+      command: ["sleep"]
+      args: ["infinity"]
+    - name: helm
+      image: alpine/helm:3.16.1
+      command: ["sleep"]
+      args: ["infinity"]
+    - name: kubeconform
+      image: ghcr.io/yannh/kubeconform:v0.6.7-alpine
+      command: ["sleep"]
+      args: ["infinity"]
 '''
     }
   }
@@ -73,7 +89,7 @@ spec:
   }
 
   environment {
-    REGISTRY     = 'ghcr.io'
+    REGISTRY     = 'docker.io'
     IMAGE_NAME   = 'barfeldman/sample-nodejs'
     IMAGE        = "${REGISTRY}/${IMAGE_NAME}"
     APP_DIR      = 'app'
@@ -102,6 +118,20 @@ spec:
             // Default tag for PR/branch builds; overridden on main by Version Bump.
             env.IMAGE_TAG = "sha-${env.SHORT_SHA}"
           }
+        }
+      }
+    }
+
+    stage('Secret Scan') {
+      steps {
+        container('gitleaks') {
+          // Fail the build if any secret is committed to the repo or its history.
+          sh 'gitleaks detect --source=. --redact --exit-code=1 --report-format=sarif --report-path=gitleaks.sarif'
+        }
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'gitleaks.sarif', allowEmptyArchive: true
         }
       }
     }
@@ -150,6 +180,30 @@ spec:
             // Fail the build only on critical dependency vulnerabilities.
             sh 'npm audit --audit-level=critical'
           }
+        }
+      }
+    }
+
+    stage('Dockerfile Lint') {
+      steps {
+        container('hadolint') {
+          sh 'hadolint "${APP_DIR}/Dockerfile"'
+        }
+      }
+    }
+
+    stage('Manifest Scan') {
+      steps {
+        container('helm') {
+          sh 'helm template rel "${CHART_DIR}" --set vault.enabled=true > rendered-manifests.yaml'
+        }
+        container('trivy') {
+          // Block on HIGH/CRITICAL Kubernetes misconfigurations.
+          sh 'trivy config rendered-manifests.yaml --severity HIGH,CRITICAL --exit-code 1 --no-progress'
+        }
+        container('kubeconform') {
+          // Schema-validate manifests; skip CRDs we don't ship schemas for.
+          sh 'kubeconform -strict -summary -ignore-missing-schemas rendered-manifests.yaml'
         }
       }
     }
