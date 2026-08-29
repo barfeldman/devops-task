@@ -7,7 +7,7 @@ image:
   repository: docker.io/barfeldman/sample-nodejs
   # Immutable, promoted build tag (semver + git sha). CI's Promote stage updates
   # this value; a git revert of that commit is a one-step rollback.
-  tag: "0.0.0-broken"
+  tag: "1.0.0-d14da2a"
   pullPolicy: IfNotPresent
 
 # Secrets used to pull from a private registry, e.g. [{ name: regcred }].
