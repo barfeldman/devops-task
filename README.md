@@ -261,6 +261,10 @@ The pipeline itself also runs green on a real Jenkins (Helm-deployed on the same
 cluster, with Kubernetes pod agents). The full build console, including the
 Semgrep and Trivy output, is in
 [`docs/proof/jenkins-build-console.txt`](docs/proof/jenkins-build-console.txt).
+That capture predates the Docker Hub and immutable-tag switch, so its build line
+still shows the earlier GHCR destination; the live cluster runs the Docker Hub
+image, which [`docs/proof/cluster-state.txt`](docs/proof/cluster-state.txt)
+confirms.
 
 ![Jenkins pipeline run](docs/proof/jenkins-build3.png)
 

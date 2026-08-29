@@ -1,46 +1,55 @@
-# Deployment proof — minikube (Wed Aug 26 15:59:31 IDT 2026)
+# Deployment proof — minikube (Sat Aug 29 19:45:27 IDT 2026)
 
 ## kubectl context / node
 minikube
-NAME       STATUS   ROLES           AGE   VERSION
-minikube   Ready    control-plane   34m   v1.35.1
+NAME       STATUS   ROLES           AGE     VERSION
+minikube   Ready    control-plane   2d20h   v1.35.1
 
 ## ArgoCD Application status
 NAME            SYNC     HEALTH    REVISION                                   REPO
-sample-nodejs   Synced   Healthy   f16d2662a556d8108b2eab752c5114d64b530a26   https://github.com/barfeldman/devops-task.git
+sample-nodejs   Synced   Healthy   30e414fa340ae8d511fe5be1da1852b5ebb91bd5   https://github.com/barfeldman/devops-task.git
 
 ## Deployed workload (namespace sample-nodejs)
-NAME                            READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS      IMAGES                                   SELECTOR
-deployment.apps/sample-nodejs   2/2     2            2           6m7s   sample-nodejs   ghcr.io/barfeldman/sample-nodejs:1.0.0   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS      IMAGES                                             SELECTOR
+deployment.apps/sample-nodejs   2/2     2            2           2d20h   sample-nodejs   docker.io/barfeldman/sample-nodejs:1.0.0-d14da2a   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
 
-NAME                                       DESIRED   CURRENT   READY   AGE    CONTAINERS      IMAGES                                   SELECTOR
-replicaset.apps/sample-nodejs-746c7f8bd5   2         2         2       6m7s   sample-nodejs   ghcr.io/barfeldman/sample-nodejs:1.0.0   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs,pod-template-hash=746c7f8bd5
-
-NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE       NOMINATED NODE   READINESS GATES
-pod/sample-nodejs-746c7f8bd5-5stmr   1/1     Running   0          6m7s   10.244.0.13   minikube   <none>           <none>
-pod/sample-nodejs-746c7f8bd5-jvzkz   1/1     Running   0          6m7s   10.244.0.14   minikube   <none>           <none>
-
-NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE    SELECTOR
-service/sample-nodejs   ClusterIP   10.110.150.246   <none>        80/TCP    6m7s   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE     SELECTOR
+service/sample-nodejs   ClusterIP   10.110.231.35   <none>        80/TCP    2d20h   app.kubernetes.io/instance=sample-nodejs,app.kubernetes.io/name=sample-nodejs
 
 NAME                                      CLASS   HOSTS                 ADDRESS        PORTS   AGE
-ingress.networking.k8s.io/sample-nodejs   nginx   sample-nodejs.local   192.168.49.2   80      6m7s
+ingress.networking.k8s.io/sample-nodejs   nginx   sample-nodejs.local   192.168.49.2   80      2d20h
 
 NAME                         DATA   AGE
-configmap/kube-root-ca.crt   1      6m8s
-configmap/sample-nodejs      2      6m7s
+configmap/kube-root-ca.crt   1      2d20h
+configmap/sample-nodejs      2      2d20h
 
 NAME                           AGE
-serviceaccount/default         6m8s
-serviceaccount/sample-nodejs   6m8s
+serviceaccount/default         2d20h
+serviceaccount/sample-nodejs   2d20h
 
-## Running image
-sample-nodejs-746c7f8bd5-5stmr  ghcr.io/barfeldman/sample-nodejs:1.0.0
-sample-nodejs-746c7f8bd5-jvzkz  ghcr.io/barfeldman/sample-nodejs:1.0.0
+NAME                             READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+sample-nodejs-7f8fdd5f47-mp84t   1/1     Running   0          5h30m   10.244.0.29   minikube   <none>           <none>
+sample-nodejs-7f8fdd5f47-mrm5l   1/1     Running   0          5h30m   10.244.0.28   minikube   <none>           <none>
+
+## Running image (immutable version+gitsha tag pulled from Docker Hub)
+sample-nodejs-7f8fdd5f47-mp84t  barfeldman/sample-nodejs:1.0.0-d14da2a  docker-pullable://barfeldman/sample-nodejs@sha256:29839faf10e6ba733c3d7ac3169ba68abd052251eb6e241ed5d3031dab41e554
+sample-nodejs-7f8fdd5f47-mrm5l  barfeldman/sample-nodejs:1.0.0-d14da2a  docker-pullable://barfeldman/sample-nodejs@sha256:29839faf10e6ba733c3d7ac3169ba68abd052251eb6e241ed5d3031dab41e554
+
+## App secret sourced from HashiCorp Vault (Vault Secrets Operator)
+NAME                                                  HEALTHY   READY   AGE
+vaultconnection.secrets.hashicorp.com/sample-nodejs   True      True    2d19h
+
+NAME                                            HEALTHY   READY   AGE
+vaultauth.secrets.hashicorp.com/sample-nodejs   True      True    2d19h
+
+NAME                                                    SYNCED   HEALTHY   READY   AGE
+vaultstaticsecret.secrets.hashicorp.com/sample-nodejs   True     True      True    2d19h
+synced Secret sample-nodejs-vault keys (values redacted): API_TOKEN _raw 
 
 ## Endpoint checks through nginx Ingress (Host: sample-nodejs.local)
-/my-app   HTTP 200
-/about    HTTP 200
-/ready    HTTP 200
-/live     HTTP 200
-/metrics  HTTP 200
+/my-app    HTTP 200
+/about     HTTP 200
+/ready     HTTP 200
+/live      HTTP 200
+/metrics   HTTP 200
+/classified (no token)  HTTP 401 (denied)
