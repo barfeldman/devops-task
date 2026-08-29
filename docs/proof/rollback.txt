@@ -1,0 +1,39 @@
+############ Rollback demo (item #26) — GitOps rollback via git revert ############
+date: 2026-08-29T11:21:16Z
+
+Strategy: the deployed image tag lives in git (values.yaml). Rolling back =
+reverting the promote commit; ArgoCD reconciles the cluster back automatically.
+(Also possible: 'argocd app rollback' or 'kubectl rollout undo' — shown in README.)
+
+========== STATE 0: healthy, running the good immutable tag ==========
+deployed image: docker.io/barfeldman/sample-nodejs:1.0.0-d14da2a
+zsh: no matches found: custom-columns=POD:.metadata.name,READY:.status.containerStatuses[0].ready,IMAGE:.status.containerStatuses[0].image
+
+========== STATE 1: bad release applied by ArgoCD (git commit dddb532) ==========
+deploy requests: docker.io/barfeldman/sample-nodejs:0.0.0-broken
+pods:
+sample-nodejs-7f8fdd5f47-mp84t   true    Running   <none>             barfeldman/sample-nodejs:1.0.0-d14da2a
+sample-nodejs-7f8fdd5f47-mrm5l   true    Running   <none>             barfeldman/sample-nodejs:1.0.0-d14da2a
+sample-nodejs-bc4d45846-f6w9x    false   Pending   ImagePullBackOff   docker.io/barfeldman/sample-nodejs:0.0.0-broken
+
+service still serving? (the two OLD 1.0.0-d14da2a pods keep the Service up;
+maxUnavailable=0 means the bad pod never replaces a healthy one):
+GET /ready -> HTTP 200
+pod "rb-check" deleted from sample-nodejs namespace
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+ready endpoints backing the Service: 10.244.0.28 10.244.0.29
+
+========== STATE 2: rolled back via 'git revert' (commit 87f669c) ==========
+deploy requests: docker.io/barfeldman/sample-nodejs:1.0.0-d14da2a
+sample-nodejs-7f8fdd5f47-mp84t   true   Running   barfeldman/sample-nodejs:1.0.0-d14da2a
+sample-nodejs-7f8fdd5f47-mrm5l   true   Running   barfeldman/sample-nodejs:1.0.0-d14da2a
+
+The ImagePullBackOff pod is gone; both pods run the good immutable tag again.
+
+----- git history of the promote/rollback (GitOps audit trail) -----
+87f669c Revert "deploy: promote 0.0.0-broken (simulated bad release for rollback demo)"
+dddb532 deploy: promote 0.0.0-broken (simulated bad release for rollback demo)
+60bdd82 deploy: promote immutable image tag 1.0.0-d14da2a (Docker Hub)
+d14da2a feat(ci): add secret + IaC/manifest scanning and switch to Docker Hub
+
+Recovery took ~6s after ArgoCD picked up the revert. Rollback = one git revert.

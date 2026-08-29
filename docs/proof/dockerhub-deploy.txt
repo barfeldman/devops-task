@@ -1,0 +1,26 @@
+###### Immutable image tag pulled from Docker Hub (items #7 + #10) ######
+date: 2026-08-29T11:19:31Z
+
+----- pushed to Docker Hub -----
+repo:   docker.io/barfeldman/sample-nodejs
+tags:   1.0.0-d14da2a (immutable, semver+gitsha)  and  1.0.0
+digest: sha256:29839faf10e6ba733c3d7ac3169ba68abd052251eb6e241ed5d3031dab41e554
+
+----- chart is pinned to the immutable tag -----
+  repository: docker.io/barfeldman/sample-nodejs
+  # Immutable, promoted build tag (semver + git sha). CI's Promote stage updates
+
+----- pods running in the cluster -----
+NAME                             READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+sample-nodejs-7f8fdd5f47-mp84t   1/1     Running   0          4m11s   10.244.0.29   minikube   <none>           <none>
+sample-nodejs-7f8fdd5f47-mrm5l   1/1     Running   0          4m22s   10.244.0.28   minikube   <none>           <none>
+
+----- image the Deployment requests -----
+docker.io/barfeldman/sample-nodejs:1.0.0-d14da2a
+
+----- image + digest actually pulled by the running pods -----
+sample-nodejs-7f8fdd5f47-mp84t  barfeldman/sample-nodejs:1.0.0-d14da2a  docker-pullable://barfeldman/sample-nodejs@sha256:29839faf10e6ba733c3d7ac3169ba68abd052251eb6e241ed5d3031dab41e554
+sample-nodejs-7f8fdd5f47-mrm5l  barfeldman/sample-nodejs:1.0.0-d14da2a  docker-pullable://barfeldman/sample-nodejs@sha256:29839faf10e6ba733c3d7ac3169ba68abd052251eb6e241ed5d3031dab41e554
+
+NOTE: pulled digest sha256:29839fa... == pushed digest above => the exact
+      immutable artifact from Docker Hub is what is running. No :latest.

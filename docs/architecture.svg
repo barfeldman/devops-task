@@ -21,35 +21,55 @@
   <text x="400" y="118" text-anchor="middle" font-size="11" fill="#52616b">app + Helm chart + Argo manifests</text>
 
   <!-- jenkins group -->
-  <rect x="600" y="52" width="440" height="156" rx="10" fill="#eef4fb" stroke="#3b6ea5" stroke-width="1.5"/>
-  <text x="620" y="78" font-size="15" font-weight="600" fill="#1f2933">Jenkins pipeline</text>
-  <text x="620" y="96" font-size="11" fill="#52616b">runs on ephemeral Kubernetes agents</text>
-  <!-- chips -->
-  <rect x="612" y="112" width="76" height="48" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
-  <text x="650" y="132" text-anchor="middle" font-size="12" fill="#1f2933">test</text>
-  <text x="650" y="148" text-anchor="middle" font-size="9.5" fill="#52616b">smoke</text>
-  <rect x="694" y="112" width="76" height="48" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
-  <text x="732" y="132" text-anchor="middle" font-size="12" fill="#1f2933">SAST</text>
-  <text x="732" y="148" text-anchor="middle" font-size="9.5" fill="#52616b">Semgrep</text>
-  <rect x="776" y="112" width="72" height="48" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
-  <text x="812" y="132" text-anchor="middle" font-size="12" fill="#1f2933">build</text>
-  <text x="812" y="148" text-anchor="middle" font-size="9.5" fill="#52616b">Kaniko</text>
-  <rect x="854" y="112" width="72" height="48" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
-  <text x="890" y="132" text-anchor="middle" font-size="12" fill="#1f2933">scan</text>
-  <text x="890" y="148" text-anchor="middle" font-size="9.5" fill="#52616b">Trivy</text>
-  <rect x="932" y="112" width="96" height="48" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
-  <text x="980" y="132" text-anchor="middle" font-size="12" fill="#1f2933">push</text>
-  <text x="980" y="148" text-anchor="middle" font-size="9.5" fill="#52616b">skopeo</text>
+  <rect x="596" y="44" width="468" height="176" rx="10" fill="#eef4fb" stroke="#3b6ea5" stroke-width="1.5"/>
+  <text x="612" y="66" font-size="15" font-weight="600" fill="#1f2933">Jenkins pipeline</text>
+  <text x="612" y="83" font-size="11" fill="#52616b">runs on ephemeral Kubernetes agents &#183; every gate fails the build</text>
+  <!-- row 1 -->
+  <rect x="606" y="94" width="104" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="658" y="115" text-anchor="middle" font-size="12" fill="#1f2933">secret</text>
+  <text x="658" y="130" text-anchor="middle" font-size="9.5" fill="#7d6608">gitleaks</text>
+  <rect x="718" y="94" width="104" height="44" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
+  <text x="770" y="115" text-anchor="middle" font-size="12" fill="#1f2933">test</text>
+  <text x="770" y="130" text-anchor="middle" font-size="9.5" fill="#52616b">smoke</text>
+  <rect x="830" y="94" width="104" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="882" y="115" text-anchor="middle" font-size="12" fill="#1f2933">SAST</text>
+  <text x="882" y="130" text-anchor="middle" font-size="9.5" fill="#7d6608">Semgrep</text>
+  <rect x="942" y="94" width="104" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="994" y="115" text-anchor="middle" font-size="12" fill="#1f2933">audit</text>
+  <text x="994" y="130" text-anchor="middle" font-size="9.5" fill="#7d6608">npm</text>
+  <!-- row 2 -->
+  <rect x="606" y="146" width="84" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="648" y="167" text-anchor="middle" font-size="12" fill="#1f2933">lint</text>
+  <text x="648" y="182" text-anchor="middle" font-size="9" fill="#7d6608">hadolint</text>
+  <rect x="696" y="146" width="84" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="738" y="164" text-anchor="middle" font-size="11.5" fill="#1f2933">manifest</text>
+  <text x="738" y="180" text-anchor="middle" font-size="8" fill="#7d6608">Trivy+kconf</text>
+  <rect x="786" y="146" width="84" height="44" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
+  <text x="828" y="167" text-anchor="middle" font-size="12" fill="#1f2933">build</text>
+  <text x="828" y="182" text-anchor="middle" font-size="9" fill="#52616b">Kaniko</text>
+  <rect x="876" y="146" width="84" height="44" rx="6" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="918" y="167" text-anchor="middle" font-size="12" fill="#1f2933">scan</text>
+  <text x="918" y="182" text-anchor="middle" font-size="9" fill="#7d6608">Trivy</text>
+  <rect x="966" y="146" width="84" height="44" rx="6" fill="#ffffff" stroke="#3b6ea5"/>
+  <text x="1008" y="167" text-anchor="middle" font-size="12" fill="#1f2933">push</text>
+  <text x="1008" y="182" text-anchor="middle" font-size="9" fill="#52616b">skopeo</text>
+  <!-- legend -->
+  <rect x="606" y="200" width="12" height="11" rx="2" fill="#fdf3e3" stroke="#c9852a"/>
+  <text x="624" y="209" font-size="9.5" fill="#7b8794">security gate</text>
   <!-- chip connectors -->
-  <path d="M688,136 H694" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
-  <path d="M770,136 H776" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
-  <path d="M848,136 H854" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
-  <path d="M926,136 H932" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M710,116 H718" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M822,116 H830" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M934,116 H942" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M690,168 H696" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M780,168 H786" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M870,168 H876" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
+  <path d="M960,168 H966" stroke="#8a97a3" fill="none" marker-end="url(#arrowlite)"/>
 
   <!-- registry -->
-  <rect x="610" y="250" width="180" height="58" rx="8" fill="#f3eefb" stroke="#6f4bb0" stroke-width="1.5"/>
-  <text x="700" y="275" text-anchor="middle" font-size="14" fill="#1f2933">Container registry</text>
-  <text x="700" y="293" text-anchor="middle" font-size="11" fill="#52616b">GHCR</text>
+  <rect x="610" y="250" width="200" height="62" rx="8" fill="#f3eefb" stroke="#6f4bb0" stroke-width="1.5"/>
+  <text x="710" y="272" text-anchor="middle" font-size="14" fill="#1f2933">Container registry</text>
+  <text x="710" y="290" text-anchor="middle" font-size="11" fill="#52616b">Docker Hub</text>
+  <text x="710" y="305" text-anchor="middle" font-size="9" fill="#7b8794">immutable tag 1.0.0-&lt;sha&gt;</text>
 
   <!-- argo cd -->
   <rect x="300" y="300" width="170" height="64" rx="8" fill="#fdf0e6" stroke="#d1743b" stroke-width="1.5"/>
@@ -101,11 +121,11 @@
   <path d="M500,100 H600" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
   <text x="550" y="92" text-anchor="middle" font-size="10.5" fill="#52616b">webhook</text>
 
-  <path d="M700,208 V250" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
-  <text x="708" y="232" font-size="10.5" fill="#52616b">push image</text>
+  <path d="M710,220 V250" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
+  <text x="718" y="240" font-size="10.5" fill="#52616b">push image</text>
 
-  <path d="M628,208 C 560,214 520,172 505,148" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
-  <text x="512" y="200" font-size="10.5" fill="#52616b">commit image tag</text>
+  <path d="M640,220 C 570,214 525,170 505,150" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
+  <text x="512" y="205" font-size="10.5" fill="#52616b">commit image tag</text>
 
   <path d="M388,144 V300" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
   <text x="394" y="228" font-size="10.5" fill="#52616b">reconcile</text>
@@ -113,8 +133,8 @@
   <path d="M470,330 C 545,330 555,412 600,434" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
   <text x="486" y="356" font-size="10.5" fill="#52616b">helm upgrade</text>
 
-  <path d="M700,308 V378" stroke="#8a97a3" stroke-dasharray="5 4" fill="none" marker-end="url(#arrowlite)"/>
-  <text x="708" y="346" font-size="10.5" fill="#7b8794">image pull</text>
+  <path d="M710,312 V378" stroke="#8a97a3" stroke-dasharray="5 4" fill="none" marker-end="url(#arrowlite)"/>
+  <text x="718" y="352" font-size="10.5" fill="#7b8794">image pull</text>
 
   <path d="M210,510 C 400,512 470,470 628,456" stroke="#4a5560" fill="none" marker-end="url(#arrow)"/>
   <text x="360" y="474" text-anchor="middle" font-size="10.5" fill="#52616b">browse via Ingress</text>

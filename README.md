@@ -36,9 +36,10 @@ checks the main routes actually answer. That runs as the first gate in CI.
 ![Architecture](docs/architecture.png)
 
 The flow is what you'd expect. You push to GitHub, Jenkins picks it up and runs
-through its stages, and if everything passes it pushes the image and writes the
-new tag back into the chart values. Argo CD notices that commit and brings the
-cluster in line with it. Traffic reaches the app only through the ingress.
+through its stages, and if everything passes it pushes the image to Docker Hub
+under an immutable version-plus-SHA tag and writes that tag back into the chart
+values. Argo CD notices that commit and brings the cluster in line with it.
+Traffic reaches the app only through the ingress.
 
 One detail I care about: the pipeline builds the image, scans it, and *then*
 pushes. If Trivy finds something serious the image never lands in the registry,
@@ -56,9 +57,10 @@ StatefulSet would buy stable identities and ordered rollouts that this app has n
 use for.
 
 **Jenkins running on Kubernetes.** Each stage runs in its own container inside a
-throwaway pod (node, semgrep, kaniko, trivy, skopeo, git). I like this because
-there's nothing to install or keep patched on a static agent, every build starts
-clean, and the build environment looks like where the app actually runs.
+throwaway pod (node, git, semgrep, gitleaks, hadolint, helm, kubeconform, kaniko,
+trivy, skopeo). I like this because there's nothing to install or keep patched on
+a static agent, every build starts clean, and the build environment looks like
+where the app actually runs.
 
 **Kaniko plus skopeo instead of Docker.** There's no Docker daemon inside a build
 pod, and I didn't want to mount a host socket. Kaniko builds rootless. The catch
@@ -81,16 +83,92 @@ CI just commits a new image tag and Argo does the rest.
 
 ## Security
 
-Most of the security work is in two places. In CI, Semgrep runs as the SAST step
-and fails the build on high-severity findings, `npm audit` fails on critical
-dependency issues, and Trivy blocks anything with HIGH or CRITICAL image CVEs
-before the push. I left `--ignore-unfixed` on for Trivy so it doesn't wedge the
-pipeline on base-image CVEs that have no patch yet.
+The pipeline treats security as a set of gates, and every one of them fails the
+build on a real finding, so nothing broken gets past the stage that catches it.
+They run cheapest and earliest first:
+
+| Gate | Tool | What it catches | Fails on |
+| --- | --- | --- | --- |
+| Secret scan | gitleaks | credentials committed anywhere in git history | any leak |
+| Unit / smoke | node | the app doesn't boot or a route regressed | test failure |
+| SAST | Semgrep | insecure code patterns | high severity |
+| Dependency audit | npm audit | vulnerable npm packages | critical |
+| Dockerfile lint | hadolint | Dockerfile foot-guns (root user, floating tags) | any finding |
+| Manifest misconfig | Trivy config | insecure Kubernetes settings in the rendered chart | HIGH / CRITICAL |
+| Manifest schema | kubeconform | manifests that aren't valid Kubernetes | any invalid doc |
+| Image scan | Trivy image | OS and library CVEs in the built image | HIGH / CRITICAL |
+
+A few of these are worth calling out. The **secret scan** runs first and looks at
+the whole history, not just the diff, so a key committed five commits ago and
+"removed" later still trips it. The **manifest gates** render the chart with
+`helm template` and then scan the output: Trivy config flags things like a
+container that can run as root or a missing read-only root filesystem, and
+kubeconform checks the YAML actually validates against the Kubernetes schemas. So
+a bad chart change is caught in CI instead of at `kubectl apply` time. I keep
+`--ignore-unfixed` on the image scan so it doesn't wedge on base-image CVEs that
+have no patch yet.
+
+I ran the four new gates locally against this repo; the output is in
+[`docs/proof/security-scans.txt`](docs/proof/security-scans.txt) and everything
+comes back clean. One of them earned its place straight away: Trivy config failed
+the Helm test pod for running with a default security context (a HIGH), so I gave
+it the same non-root, read-only, drop-all hardening as the app.
 
 At runtime the chart runs the container as non-root (UID 1000), with a read-only
 root filesystem (there's a small emptyDir for `/tmp`), all Linux capabilities
 dropped, the default seccomp profile on, and the service account token not
 mounted since the app never talks to the API server.
+
+## Images and the registry
+
+Built images go to Docker Hub at
+[`docker.io/barfeldman/sample-nodejs`](https://hub.docker.com/r/barfeldman/sample-nodejs).
+Kaniko builds the image inside the pipeline, Trivy scans the resulting tarball,
+and only a clean image is pushed with skopeo.
+
+Every image gets an **immutable tag**: the app version plus the short git SHA,
+for example `1.0.0-d14da2a`. I don't deploy moving tags like `latest` or a bare
+`1.0.0`, because those can point at different bytes tomorrow and make a rollback
+meaningless. The tag names the exact commit it was built from, the pipeline
+writes that tag into the chart values as the promotion step, and Argo CD deploys
+it. What's running is always traceable back to one line of history.
+
+The proof is in
+[`docs/proof/dockerhub-deploy.txt`](docs/proof/dockerhub-deploy.txt): the digest
+Docker Hub reports for the pushed tag is byte-for-byte the digest the running
+pods report pulling. No local image loading, no `latest`.
+
+![Image on Docker Hub](docs/proof/dockerhub.png)
+
+## Rolling back
+
+Because the deployed version is just a tag in Git, a rollback is a Git operation,
+and that's the primary path:
+
+```bash
+git revert <promote-commit>   # put the previous immutable tag back
+git push                      # Argo CD reconciles the cluster to it
+```
+
+Two things make this safe. The image is immutable, so reverting to the old tag
+brings back exactly the bytes that were running before, not a fresh rebuild. And
+the rollout is set up so a bad version can't take the app down: with two replicas
+the effective `maxUnavailable` is zero, so Kubernetes keeps the healthy pods
+serving until a replacement is genuinely ready.
+
+I tested this end to end instead of just describing it. I promoted a deliberately
+broken tag (`0.0.0-broken`), let Argo CD apply it, and watched the new pod sit in
+`ImagePullBackOff` while the two old pods kept answering 200. Then I reverted the
+bad commit, and the cluster was back on the good image about six seconds later.
+The full sequence, with pod states and the git trail, is in
+[`docs/proof/rollback.txt`](docs/proof/rollback.txt).
+
+If I ever needed to move faster than a Git round-trip during an incident, there
+are two lower-level escape hatches: `argocd app rollback sample-nodejs` jumps to a
+previous synced revision, and `kubectl -n sample-nodejs rollout undo
+deploy/sample-nodejs` reverts the Deployment's ReplicaSet. Both are stop-gaps.
+With Argo's self-heal on, the real fix still has to land in Git or Argo will
+reconcile the cluster straight back to whatever the repo says.
 
 ## Secrets (HashiCorp Vault)
 
@@ -162,7 +240,7 @@ curl localhost:8080/my-app
 
 If you want to run the pipeline yourself, the job should be a Multibranch or
 "Pipeline from SCM" job with a Kubernetes cloud configured. It needs two things
-wired up: a `regcred` docker-config secret for pushing images, and a
+wired up: a `regcred` docker-config secret with push access to Docker Hub, and a
 `github-credentials` username/token for the promotion commit.
 
 ## Proof it actually runs
@@ -198,13 +276,20 @@ this shook out two real bugs I'd otherwise have shipped: `timestamps()` needed a
 plugin that wasn't installed, and my own git commands tripped git's
 dubious-ownership check inside the agent container. Both are fixed.
 
+I added the secret, Dockerfile and manifest gates after that run. By then I'd
+taken Jenkins down to free memory for Vault, so rather than re-running the whole
+job I validated those four against this repo using the same container images the
+pipeline pins (gitleaks, hadolint, Trivy config, kubeconform). The output is in
+[`docs/proof/security-scans.txt`](docs/proof/security-scans.txt).
+
 Running the gates directly also caught real vulnerabilities: npm audit flagged
 vulnerable Express transitive deps, and Trivy caught npm's bundled packages plus
 an OpenSSL CVE in the base image. That is why the lockfile is patched and the
 Dockerfile drops npm and runs `apk upgrade`. Everything comes back clean now.
 
-The image in the demo was built locally and loaded into minikube rather than
-pushed to GHCR, since that push belongs to the pipeline and my token doesn't have
-package write scope. The version bump is a simple patch bump on `main`; the
-promotion commit carries `[skip ci]` and the pipeline also guards against it so it
-can't trigger itself in a loop.
+The demo image is pushed to Docker Hub and pulled back down by the cluster, so
+the registry round-trip is real and not faked with a local image load. I checked
+that the running pods pull the exact digest I pushed, and the deployed tag is the
+immutable version-plus-SHA one, never `latest`. The version bump is a simple patch
+bump on `main`; the promotion commit carries `[skip ci]` and the pipeline also
+guards against it so it can't trigger itself in a loop.

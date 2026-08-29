@@ -1,0 +1,39 @@
+###### DevSecOps scan gates — local run mirroring the Jenkins pipeline ######
+date: 2026-08-29T11:19:10Z   trivy: 0.74.0
+(These are the same gates the Jenkinsfile enforces: gitleaks, hadolint,
+ trivy config, kubeconform. Non-zero exit fails the build.)
+
+===== 1) Secret scan: gitleaks detect (full git history) =====
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+[90m11:19AM[0m [32mINF[0m [1m16 commits scanned.[0m
+[90m11:19AM[0m [32mINF[0m [1mscanned ~124045 bytes (124.04 KB) in 137ms[0m
+[90m11:19AM[0m [32mINF[0m [1mno leaks found[0m
+gitleaks exit: 0
+
+===== 2) Dockerfile lint: hadolint =====
+hadolint exit: 0 (no findings above = clean)
+
+===== 3) Manifest misconfig scan: trivy config (fail on HIGH,CRITICAL) =====
+
+Report Summary
+
+┌───────────────┬────────────┬───────────────────┐
+│    Target     │    Type    │ Misconfigurations │
+├───────────────┼────────────┼───────────────────┤
+│ rendered.yaml │ kubernetes │         0         │
+└───────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+trivy config exit: 0
+
+===== 4) Manifest schema validation: kubeconform -strict =====
+Summary: 9 resources found in 1 file - Valid: 6, Invalid: 0, Errors: 0, Skipped: 3
+kubeconform exit: 0
