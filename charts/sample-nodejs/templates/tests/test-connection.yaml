@@ -9,6 +9,13 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: curl
       image: curlimages/curl:8.10.1
@@ -18,6 +25,7 @@ spec:
         - "http://{{ include "sample-nodejs.fullname" . }}:{{ .Values.service.port }}/ready"
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
         readOnlyRootFilesystem: true
         allowPrivilegeEscalation: false
         capabilities:

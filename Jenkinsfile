@@ -199,7 +199,7 @@ spec:
         }
         container('trivy') {
           // Block on HIGH/CRITICAL Kubernetes misconfigurations.
-          sh 'trivy config rendered-manifests.yaml --severity HIGH,CRITICAL --exit-code 1 --no-progress'
+          sh 'trivy config rendered-manifests.yaml --severity HIGH,CRITICAL --exit-code 1 --quiet'
         }
         container('kubeconform') {
           // Schema-validate manifests; skip CRDs we don't ship schemas for.
