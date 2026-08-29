@@ -14,6 +14,9 @@ Everything lives in this one repo:
 - `argocd/` holds the Argo CD project and application
 - `docs/` has the original task, the architecture diagram and the deploy screenshots
 
+For the full build story, the decisions, and the problems I hit along the way, see
+[docs/PROJECT-JOURNEY.md](docs/PROJECT-JOURNEY.md).
+
 ## The app
 
 It's a tiny Express server on port 8080. A few routes and not much else:
