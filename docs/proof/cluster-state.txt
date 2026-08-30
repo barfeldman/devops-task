@@ -1,4 +1,4 @@
-# Deployment proof — minikube (Sat Aug 29 19:45:27 IDT 2026)
+# Deployment proof - minikube (Sat Aug 29 19:45:27 IDT 2026)
 
 ## kubectl context / node
 minikube

@@ -1,4 +1,4 @@
-###### DevSecOps scan gates — local run mirroring the Jenkins pipeline ######
+###### DevSecOps scan gates - local run mirroring the Jenkins pipeline ######
 date: 2026-08-29T11:19:10Z   trivy: 0.74.0
 (These are the same gates the Jenkinsfile enforces: gitleaks, hadolint,
  trivy config, kubeconform. Non-zero exit fails the build.)

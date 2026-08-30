@@ -1,9 +1,9 @@
-############ Rollback demo (item #26) — GitOps rollback via git revert ############
+############ Rollback demo (item #26) - GitOps rollback via git revert ############
 date: 2026-08-29T11:21:16Z
 
 Strategy: the deployed image tag lives in git (values.yaml). Rolling back =
 reverting the promote commit; ArgoCD reconciles the cluster back automatically.
-(Also possible: 'argocd app rollback' or 'kubectl rollout undo' — shown in README.)
+(Also possible: 'argocd app rollback' or 'kubectl rollout undo' - shown in README.)
 
 ========== STATE 0: healthy, running the good immutable tag ==========
 deployed image: docker.io/barfeldman/sample-nodejs:1.0.0-d14da2a

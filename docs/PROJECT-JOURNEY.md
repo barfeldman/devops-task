@@ -14,8 +14,8 @@ and everything described here is live on a local minikube cluster.
 
 I forked a small Node.js sample app and took it all the way to a running,
 GitOps-managed deployment with a security-gated CI/CD pipeline. The brief was a
-DevOps/DevSecOps exercise, so the point was not just to make it run, but to make
-it build, test, scan, ship, and roll back the way a real service would.
+DevOps/DevSecOps exercise, so a working start command was not the goal. It had to
+build, test, scan, ship, and roll back the way a real service does.
 
 The finished system does this:
 
@@ -119,12 +119,11 @@ The stages, in order:
 | 11 | Push Image | skopeo | pushes to Docker Hub (main only) |
 | 12 | Promote | git | writes the new tag into the chart values (main only) |
 
-Two design choices matter here. First, the image is built, scanned, and only then
-pushed, so a bad image never reaches the registry. That ordering is the whole
-reason for building to a tarball with Kaniko and pushing later with skopeo instead
-of doing both in one step. Second, the security gates run cheapest and earliest
-first, so the pipeline fails fast on the easy things (a leaked secret, a failing
-test) before spending time on a build.
+Two things about the ordering are deliberate. The image is built, scanned, and
+only then pushed, so a bad image never reaches the registry. That is why the build
+goes to a tarball with Kaniko and gets pushed later with skopeo, rather than both
+in one step. The gates also run cheapest and earliest first, so a leaked secret or
+a failing test stops the build before it spends time compiling an image.
 
 ---
 
@@ -199,7 +198,7 @@ in Git.
 
 ## 10. How I built it, in order
 
-The commit history tells the story. These are the phases.
+I built it in roughly this order. The commit hashes are in parentheses.
 
 **Scaffold and app (b62e309, adbc6de).** Set up the repo, wrote the multi-stage
 Dockerfile, and added the smoke test the original was missing.
@@ -252,7 +251,7 @@ diagram, and the proof so everything is consistent with the live state.
 
 ## 11. Problems I hit and how I fixed them
 
-These are the ones worth remembering.
+The ones that cost me the most time:
 
 - **npm audit and Trivy found real CVEs.** Fixed by `npm audit fix` (Express to a
   patched version) and by removing npm's bundled modules plus `apk upgrade` in the

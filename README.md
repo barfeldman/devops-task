@@ -101,7 +101,7 @@ They run cheapest and earliest first:
 | Manifest schema | kubeconform | manifests that aren't valid Kubernetes | any invalid doc |
 | Image scan | Trivy image | OS and library CVEs in the built image | HIGH / CRITICAL |
 
-A few of these are worth calling out. The **secret scan** runs first and looks at
+Two of these are less obvious. The **secret scan** runs first and looks at
 the whole history, not just the diff, so a key committed five commits ago and
 "removed" later still trips it. The **manifest gates** render the chart with
 `helm template` and then scan the output: Trivy config flags things like a
